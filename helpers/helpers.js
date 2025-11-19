@@ -2,7 +2,6 @@ const ddata = require('./ddata')
 const arrayify = require('array-back')
 const handlebars = require('handlebars')
 const util = require('util')
-const commonSequence = require('common-sequence')
 
 /**
 A library of helpers used exclusively by dmd.. dmd also registers helpers from ddata.
@@ -168,6 +167,15 @@ function _groupChildren (groupByFields, options) {
   return _groupBy(children, groupByFields)
 }
 
+function *commonSequence(a, b) {
+  const bSet = b.values()
+  for (const aValue of a) {
+    const { done, value: bValue } = bSet.next()
+    if (done || aValue !== bValue) break
+    yield aValue
+  }
+}
+
 /**
 takes the children of this, groups them, inserts group headings..
 */
@@ -192,7 +200,7 @@ function _groupBy (identifiers, groupByFields) {
   let level = 0
   identifiers.forEach(function (identifier, index) {
     if (!deepEqual(identifier._group, prevGroup)) {
-      const common = commonSequence(identifier._group, prevGroup)
+      const common = Array.from(commonSequence(identifier._group, prevGroup))
       level = common.length
       identifier._group.forEach(function (group, i) {
         if (group !== common[i] && group !== null) {
